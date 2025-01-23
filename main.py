@@ -10,7 +10,7 @@ from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support.ui import WebDriverWait as wait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, TimeoutException
 from urllib3.exceptions import ReadTimeoutError
 
 
@@ -57,13 +57,21 @@ def main(url):
             posts = browser.find_elements(By.CLASS_NAME, 'post-title.entry-title')
             for post in posts:
                 try:
-                    print(post.text)
                     post.click()
 
-                    pdf_url = wait(browser, 60).until(EC.visibility_of_element_located(
-                        (By.CLASS_NAME, 'wp-block-image'))).find_element(By.TAG_NAME, 'a').get_attribute('href')
-                    save_file(pdf_url, page_download_dir)
-                    time.sleep(5)
+                    try:
+                        pdf_url = wait(browser, 120).until(EC.visibility_of_element_located(
+                            (By.CLASS_NAME, 'wp-block-image'))).find_element(By.TAG_NAME, 'a').get_attribute('href')
+                        save_file(pdf_url, page_download_dir)
+                        time.sleep(3)
+                        print(post.text)
+                    except TimeoutException:
+                        print("----------------------------------------------------------")
+                        print("!-------- \t ERREUR DE TÉLÉCHARGEMENT \t --------!")
+                        print("----------------------------------------------------------")
+                        print("!-------- \t VERIFIES TA CONNEXION \t\t --------!")
+                        print("----------------------------------------------------------")
+                        print("!-------- \t ATTENTE DE 2 MINUTES DÉPASSÉ \t --------!")
 
                     browser.execute_script("window.history.back()")
                     wait(browser, 120).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
